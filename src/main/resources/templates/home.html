@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Alien</title>
+</head>
+<body>
+    <h1>Add an Alien</h1>
+    <form th:action="@{/AddAlien}" th:object="${alien}" method="post">
+        <label for="aid">Alien ID</label>
+        <input type="number" id="aid" th:field="*{aid}" placeholder="Enter Alien ID" required>
+        <span th:if="${#fields.hasErrors('aid')}" th:errors="*{aid}"></span>
+        <label for="aname">Alien name</label>
+        <input type="text" id="aname" th:field="*{aname}" required>
+        <span th:if="${#fields.hasErrors('aname')}" th:errors="*{aname}"></span>
+        <label for="tech">Alien Technology</label>
+        <input type="text" id="tech" th:field="*{tech}" required>
+        <span th:if="${#fields.hasErrors('tech')}" th:errors="*{tech}"></span>
+        <button type="submit">Add Alien</button>
+    </form>
+</body>
+</html>

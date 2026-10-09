@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alien Added</title>
+</head>
+<body>
+    <h1>Alien added</h1>
+    <p>Alien ID: <span th:text="${alien.aid}"></span></p>
+    <p>Alien name: <span th:text="${alien.aname}"></span></p>
+    <p>Alien technology: <span th:text="${alien.tech}"></span></p>
+    <a th:href="@{/}">Add another alien</a>
+</body>
+</html>
