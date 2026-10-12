@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+// This class represents one alien record in the database.
 @Entity
 @Table(name = "alien")
 public class Alien {
@@ -53,4 +54,3 @@ public class Alien {
         return "Alien [aid=" + aid + ", aname=" + aname + ", tech=" + tech + "]";
     }
 }
-

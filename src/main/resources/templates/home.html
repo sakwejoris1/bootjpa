@@ -3,21 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Alien</title>
+    <title>Alien Directory</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-    <h1>Add an Alien</h1>
-    <form th:action="@{/AddAlien}" th:object="${alien}" method="post">
-        <label for="aid">Alien ID</label>
-        <input type="number" id="aid" th:field="*{aid}" placeholder="Enter Alien ID" required>
-        <span th:if="${#fields.hasErrors('aid')}" th:errors="*{aid}"></span>
-        <label for="aname">Alien name</label>
-        <input type="text" id="aname" th:field="*{aname}" required>
-        <span th:if="${#fields.hasErrors('aname')}" th:errors="*{aname}"></span>
-        <label for="tech">Alien Technology</label>
-        <input type="text" id="tech" th:field="*{tech}" required>
-        <span th:if="${#fields.hasErrors('tech')}" th:errors="*{tech}"></span>
-        <button type="submit">Add Alien</button>
-    </form>
+    <header class="site-header">
+        <div class="container">
+            <p class="eyebrow">SPRING BOOT • JPA </p>
+            <h1>Alien Directory</h1>
+            <p>Keep track of alien visitors and the technology they use.</p>
+        </div>
+    </header>
+
+    <main class="container page-content">
+        <p class="notice success" th:if="${message}" th:text="${message}"></p>
+        <p class="notice error" th:if="${error}" th:text="${error}"></p>
+
+        <section class="card">
+            <h2>Add an alien</h2>
+            <p class="muted">Enter a unique ID, name, and technology.</p>
+            <form th:action="@{/AddAlien}" th:object="${alien}" method="post" class="alien-form">
+                <div class="field">
+                    <label for="aid">Alien ID</label>
+                    <input type="number" id="aid" th:field="*{aid}" min="1" placeholder="e.g. 101" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('aid')}" th:errors="*{aid}"></span>
+                </div>
+                <div class="field">
+                    <label for="aname">Alien name</label>
+                    <input type="text" id="aname" th:field="*{aname}" maxlength="255" placeholder="e.g. Zorg" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('aname')}" th:errors="*{aname}"></span>
+                </div>
+                <div class="field">
+                    <label for="tech">Technology</label>
+                    <input type="text" id="tech" th:field="*{tech}" maxlength="255" placeholder="e.g. Warp drive" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('tech')}" th:errors="*{tech}"></span>
+                </div>
+                <button type="submit">Add alien</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <div>
+                    <h2>All aliens</h2>
+                    <p class="muted">Currently registered in the directory.</p>
+                </div>
+                <span class="count" th:text="${aliens.size()} + ' total'">0 total</span>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(aliens)}">
+                No aliens have been added yet. Use the form above to get started.
+            </div>
+            <div class="table-wrap" th:unless="${#lists.isEmpty(aliens)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Technology</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${aliens}">
+                            <td th:text="${item.aid}">101</td>
+                            <td th:text="${item.aname}">Zorg</td>
+                            <td th:text="${item.tech}">Warp drive</td>
+                            <td class="actions">
+                                <a class="button button-secondary"
+                                   th:href="@{/aliens/{aid}/edit(aid=${item.aid})}">Edit</a>
+                                <form th:action="@{/aliens/{aid}/delete(aid=${item.aid})}" method="post">
+                                    <button class="button button-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
