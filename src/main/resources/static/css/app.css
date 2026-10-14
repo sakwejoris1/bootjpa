@@ -35,6 +35,10 @@ body {
     color: #dce9f5;
 }
 
+.site-header form {
+    margin-top: 1rem;
+}
+
 .eyebrow {
     margin: 0;
     color: #b8d9f5;

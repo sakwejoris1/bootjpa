@@ -11,7 +11,11 @@
         <div class="container">
             <p class="eyebrow">SPRING BOOT • JPA </p>
             <h1>Alien Directory</h1>
-            <p>Keep track of alien visitors and the technology they use.</p>
+            <p>Welcome, <strong th:text="${username}">user</strong>
+                · User ID <strong th:text="${userId}">1</strong></p>
+            <form th:action="@{/logout}" method="post">
+                <button class="button-secondary" type="submit">Log out</button>
+            </form>
         </div>
     </header>
 
@@ -30,12 +34,12 @@
                 </div>
                 <div class="field">
                     <label for="aname">Alien name</label>
-                    <input type="text" id="aname" th:field="*{aname}" maxlength="255" placeholder="e.g. Zorg" required>
+                    <input type="text" id="aname" th:field="*{aname}" maxlength="255" placeholder="e.g. Sakwe" required>
                     <span class="field-error" th:if="${#fields.hasErrors('aname')}" th:errors="*{aname}"></span>
                 </div>
                 <div class="field">
                     <label for="tech">Technology</label>
-                    <input type="text" id="tech" th:field="*{tech}" maxlength="255" placeholder="e.g. Warp drive" required>
+                    <input type="text" id="tech" th:field="*{tech}" maxlength="255" placeholder="e.g. java" required>
                     <span class="field-error" th:if="${#fields.hasErrors('tech')}" th:errors="*{tech}"></span>
                 </div>
                 <button type="submit">Add alien</button>
@@ -45,14 +49,14 @@
         <section class="card">
             <div class="section-heading">
                 <div>
-                    <h2>All aliens</h2>
-                    <p class="muted">Currently registered in the directory.</p>
+                    <h2>My aliens</h2>
+                    <p class="muted">Aliens created by your account.</p>
                 </div>
                 <span class="count" th:text="${aliens.size()} + ' total'">0 total</span>
             </div>
 
             <div class="empty-state" th:if="${#lists.isEmpty(aliens)}">
-                No aliens have been added yet. Use the form above to get started.
+                You have not added any aliens yet. Use the form above to get started.
             </div>
             <div class="table-wrap" th:unless="${#lists.isEmpty(aliens)}">
                 <table>

@@ -8,16 +8,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpSession;
 
 import sakwe.example.bootjpa.model.Alien;
+import sakwe.example.bootjpa.model.UserAccount;
 import sakwe.example.bootjpa.repository.AlienRepo;
+import sakwe.example.bootjpa.repository.UserAccountRepo;
 
 // These tests check the main browser actions and their database results.
 @SpringBootTest
@@ -30,25 +38,38 @@ class AlienControllerTest {
     @Autowired
     private AlienRepo repo;
 
+    @Autowired
+    private UserAccountRepo userAccountRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private UserAccount owner;
+
     @BeforeEach
-    void clearAliens() {
+    void clearData() {
         repo.deleteAll();
+        userAccountRepo.deleteAll();
+        owner = account("test-user");
+        userAccountRepo.save(owner);
     }
 
     @Test
     void showsHomePageAndAlienList() throws Exception {
-        repo.save(alien(12, "Zorg", "Warp drive"));
+        repo.save(alien(12, "Zorg", "Warp drive", owner));
 
-        mockMvc.perform(get("/"))
+        mockMvc.perform(get("/").with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("home"))
+                .andExpect(content().string(containsString("User ID")))
+                .andExpect(content().string(containsString(">" + owner.getId() + "</strong>")))
                 .andExpect(content().string(containsString("Zorg")))
                 .andExpect(content().string(containsString("Warp drive")));
     }
 
     @Test
     void redirectsOldAddUrlToHome() throws Exception {
-        mockMvc.perform(get("/AddAlien")
+        mockMvc.perform(get("/AddAlien").with(user("test-user"))
                         .param("aid", "7")
                         .param("aname", "Ignored")
                         .param("tech", "Ignored"))
@@ -60,7 +81,7 @@ class AlienControllerTest {
 
     @Test
     void addsValidAlien() throws Exception {
-        mockMvc.perform(post("/AddAlien")
+        mockMvc.perform(post("/AddAlien").with(user("test-user")).with(csrf())
                         .param("aid", "42")
                         .param("aname", "Zorg")
                         .param("tech", "Warp drive"))
@@ -70,13 +91,19 @@ class AlienControllerTest {
         Alien savedAlien = repo.findById(42).orElseThrow();
         assertThat(savedAlien.getAname()).isEqualTo("Zorg");
         assertThat(savedAlien.getTech()).isEqualTo("Warp drive");
+        assertThat(savedAlien.getOwner().getId()).isEqualTo(owner.getId());
+
+        mockMvc.perform(get("/").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Zorg")))
+                .andExpect(content().string(containsString("Warp drive")));
     }
 
     @Test
     void opensEditFormWithCurrentAlienDetails() throws Exception {
-        repo.save(alien(8, "Zorg", "Warp drive"));
+        repo.save(alien(8, "Zorg", "Warp drive", owner));
 
-        mockMvc.perform(get("/aliens/8/edit"))
+        mockMvc.perform(get("/aliens/8/edit").with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("alien-form"))
                 .andExpect(content().string(containsString("value=\"Zorg\"")))
@@ -85,7 +112,7 @@ class AlienControllerTest {
 
     @Test
     void rejectsInvalidAlienWithoutSaving() throws Exception {
-        mockMvc.perform(post("/AddAlien")
+        mockMvc.perform(post("/AddAlien").with(user("test-user")).with(csrf())
                         .param("aid", "0")
                         .param("aname", " ")
                         .param("tech", " "))
@@ -100,7 +127,7 @@ class AlienControllerTest {
 
     @Test
     void rejectsMissingAlienIdWithoutSaving() throws Exception {
-        mockMvc.perform(post("/AddAlien")
+        mockMvc.perform(post("/AddAlien").with(user("test-user")).with(csrf())
                         .param("aname", "Zorg")
                         .param("tech", "Warp drive"))
                 .andExpect(status().isOk())
@@ -112,9 +139,9 @@ class AlienControllerTest {
 
     @Test
     void rejectsDuplicateAlienIdInsteadOfOverwriting() throws Exception {
-        repo.save(alien(7, "Existing", "Old tech"));
+        repo.save(alien(7, "Existing", "Old tech", owner));
 
-        mockMvc.perform(post("/AddAlien")
+        mockMvc.perform(post("/AddAlien").with(user("test-user")).with(csrf())
                         .param("aid", "7")
                         .param("aname", "Replacement")
                         .param("tech", "New tech"))
@@ -127,9 +154,9 @@ class AlienControllerTest {
 
     @Test
     void editsAlienDetails() throws Exception {
-        repo.save(alien(9, "Before", "Old tech"));
+        repo.save(alien(9, "Before", "Old tech", owner));
 
-        mockMvc.perform(post("/aliens/9/edit")
+        mockMvc.perform(post("/aliens/9/edit").with(user("test-user")).with(csrf())
                         .param("aid", "9")
                         .param("aname", "After")
                         .param("tech", "New tech"))
@@ -143,9 +170,9 @@ class AlienControllerTest {
 
     @Test
     void preventsChangingAlienIdWhileEditing() throws Exception {
-        repo.save(alien(9, "Before", "Old tech"));
+        repo.save(alien(9, "Before", "Old tech", owner));
 
-        mockMvc.perform(post("/aliens/9/edit")
+        mockMvc.perform(post("/aliens/9/edit").with(user("test-user")).with(csrf())
                         .param("aid", "10")
                         .param("aname", "After")
                         .param("tech", "New tech"))
@@ -159,20 +186,89 @@ class AlienControllerTest {
 
     @Test
     void deletesAlien() throws Exception {
-        repo.save(alien(15, "Delete me", "Unknown"));
+        repo.save(alien(15, "Delete me", "Unknown", owner));
 
-        mockMvc.perform(post("/aliens/15/delete"))
+        mockMvc.perform(post("/aliens/15/delete").with(user("test-user")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
 
         assertThat(repo.existsById(15)).isFalse();
     }
 
-    private Alien alien(int aid, String name, String tech) {
+    @Test
+    void redirectsGuestsToLogin() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
+    }
+
+    @Test
+    void usersCannotSeeOrChangeAnotherUsersAliens() throws Exception {
+        UserAccount otherUser = userAccountRepo.save(account("other-user"));
+        repo.save(alien(22, "Private alien", "Secret tech", otherUser));
+
+        mockMvc.perform(get("/").with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("Private alien"))));
+
+        mockMvc.perform(post("/aliens/22/delete").with(user("test-user")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/aliens/22/edit").with(user("test-user")).with(csrf())
+                        .param("aid", "22")
+                        .param("aname", "Changed by attacker")
+                        .param("tech", "Changed"))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(repo.existsById(22)).isTrue();
+        assertThat(repo.findById(22).orElseThrow().getAname()).isEqualTo("Private alien");
+    }
+
+    @Test
+    void registrationStoresHashedPasswordAndLoginCreatesSession() throws Exception {
+        mockMvc.perform(get("/register").with(anonymous()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("register"));
+
+        mockMvc.perform(post("/register").with(anonymous()).with(csrf())
+                        .param("username", "new-user")
+                        .param("password", "safe-password")
+                        .param("confirmPassword", "safe-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        UserAccount registered = userAccountRepo.findByUsername("new-user").orElseThrow();
+        assertThat(registered.getId()).isNotNull();
+        assertThat(registered.getPassword()).isNotEqualTo("safe-password");
+        assertThat(passwordEncoder.matches("safe-password", registered.getPassword())).isTrue();
+
+        MvcResult login = mockMvc.perform(post("/login").with(anonymous()).with(csrf())
+                        .param("username", "new-user")
+                        .param("password", "safe-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) login.getRequest().getSession(false);
+        mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("new-user")))
+                .andExpect(content().string(containsString("User ID")));
+    }
+
+    private UserAccount account(String username) {
+        UserAccount account = new UserAccount();
+        account.setUsername(username);
+        account.setPassword(passwordEncoder.encode("test-password"));
+        return account;
+    }
+
+    private Alien alien(int aid, String name, String tech, UserAccount alienOwner) {
         Alien alien = new Alien();
         alien.setAid(aid);
         alien.setAname(name);
         alien.setTech(tech);
+        alien.setOwner(alienOwner);
         return alien;
     }
 }

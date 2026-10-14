@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create account · Alien Directory</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <p class="eyebrow">ALIEN DIRECTORY</p>
+            <h1>Create your account</h1>
+            <p>Your aliens will be private to your account.</p>
+        </div>
+    </header>
+    <main class="container page-content">
+        <p class="notice error" th:if="${error}" th:text="${error}"></p>
+        <section class="card form-card">
+            <form th:action="@{/register}" method="post" class="alien-form">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" maxlength="50"
+                           th:value="${username}" autocomplete="username" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" minlength="8" maxlength="72"
+                           autocomplete="new-password" required>
+                </div>
+                <div class="field">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" minlength="8" maxlength="72"
+                           autocomplete="new-password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Create account</button>
+                    <a class="button button-secondary" th:href="@{/login}">Back to log in</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

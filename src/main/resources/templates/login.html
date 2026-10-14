@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in · Alien Directory</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <p class="eyebrow">ALIEN DIRECTORY</p>
+            <h1>Welcome back</h1>
+            <p>Log in to view and manage your aliens.</p>
+        </div>
+    </header>
+    <main class="container page-content">
+        <p class="notice success" th:if="${message}" th:text="${message}"></p>
+        <p class="notice success" th:if="${param.logout}">You have been logged out.</p>
+        <p class="notice error" th:if="${param.error}">Username or password is incorrect.</p>
+        <section class="card form-card">
+            <form th:action="@{/login}" method="post" class="alien-form">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Log in</button>
+                    <a class="button button-secondary" th:href="@{/register}">Create account</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

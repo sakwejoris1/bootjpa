@@ -1,6 +1,9 @@
 package sakwe.example.bootjpa.model;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Min;
@@ -25,6 +28,10 @@ public class Alien {
     @Size(max = 255, message = "Alien technology must be 255 characters or fewer.")
     private String tech;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private UserAccount owner;
+
     public Integer getAid() {
         return aid;
     }
@@ -47,6 +54,14 @@ public class Alien {
 
     public void setTech(String tech) {
         this.tech = tech;
+    }
+
+    public UserAccount getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserAccount owner) {
+        this.owner = owner;
     }
 
     @Override
